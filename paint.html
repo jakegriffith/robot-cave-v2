@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cave Painting Studio - Show us what you've seen the robots do</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            height: 100%;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(
+                to bottom,
+                rgba(20, 10, 5, 1) 0%,
+                rgba(40, 25, 15, 1) 30%,
+                rgba(60, 35, 20, 1) 70%,
+                rgba(80, 45, 25, 1) 100%
+            );
+            overflow-x: hidden;
+        }
+
+        .painting-container {
+            position: relative;
+            width: 100vw;
+            min-height: 100vh;
+            background-image: url('Cave-wall.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        .cave-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                rgba(40, 25, 15, 0.3) 0%,
+                rgba(60, 35, 20, 0.4) 50%,
+                rgba(80, 45, 25, 0.5) 100%
+            );
+            z-index: 1;
+        }
+
+        .header {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 30px 20px;
+            background: rgba(20, 10, 5, 0.8);
+            backdrop-filter: blur(5px);
+            border-bottom: 3px solid rgba(139, 69, 19, 0.6);
+        }
+
+        .header h1 {
+            color: #FFD700;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #CD853F;
+            font-size: 1.2rem;
+            font-style: italic;
+        }
+
+        .painting-studio {
+            position: relative;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            gap: 30px;
+        }
+
+        .canvas-container {
+            position: relative;
+            background: linear-gradient(
+                135deg,
+                rgba(101, 67, 33, 0.9) 0%,
+                rgba(139, 69, 19, 0.8) 30%,
+                rgba(160, 82, 45, 0.7) 70%,
+                rgba(139, 69, 19, 0.9) 100%
+            );
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 
+                0 0 30px rgba(139, 69, 19, 0.6),
+                inset 0 0 20px rgba(0, 0, 0, 0.3);
+            border: 3px solid rgba(160, 82, 45, 0.8);
+        }
+
+        .canvas-frame {
+            position: relative;
+            background: linear-gradient(
+                45deg,
+                rgba(62, 39, 35, 0.9) 0%,
+                rgba(101, 67, 33, 0.8) 50%,
+                rgba(62, 39, 35, 0.9) 100%
+            );
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+
+        #paintingCanvas {
+            display: block;
+            background: linear-gradient(
+                135deg,
+                rgba(139, 69, 19, 0.3) 0%,
+                rgba(160, 82, 45, 0.4) 30%,
+                rgba(101, 67, 33, 0.5) 70%,
+                rgba(139, 69, 19, 0.3) 100%
+            );
+            border-radius: 10px;
+            cursor: crosshair;
+            box-shadow: 
+                0 0 20px rgba(0, 0, 0, 0.4),
+                inset 0 0 30px rgba(139, 69, 19, 0.2);
+            border: 2px solid rgba(101, 67, 33, 0.6);
+        }
+
+        .color-palette {
+            display: flex;
+            gap: 15px;
+            background: rgba(40, 25, 15, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 
+                0 0 20px rgba(139, 69, 19, 0.4),
+                inset 0 0 10px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(139, 69, 19, 0.6);
+        }
+
+        .color-option {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 
+                0 0 10px rgba(0, 0, 0, 0.5),
+                inset 0 0 10px rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+            box-shadow: 
+                0 0 20px rgba(255, 215, 0, 0.5),
+                inset 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+
+        .color-option.selected {
+            transform: scale(1.2);
+            border-color: rgba(255, 215, 0, 0.8);
+            box-shadow: 
+                0 0 25px rgba(255, 215, 0, 0.7),
+                0 0 40px rgba(255, 215, 0, 0.4),
+                inset 0 0 15px rgba(255, 255, 255, 0.3);
+        }
+
+        .color-dark-red {
+            background: radial-gradient(
+                circle,
+                #8B0000 0%,
+                #660000 50%,
+                #4A0000 100%
+            );
+        }
+
+        .color-white {
+            background: radial-gradient(
+                circle,
+                #F5F5DC 0%,
+                #E6E6E6 50%,
+                #D3D3D3 100%
+            );
+        }
+
+        .color-dark-blue {
+            background: radial-gradient(
+                circle,
+                #191970 0%,
+                #0F0F4A 50%,
+                #0A0A35 100%
+            );
+        }
+
+        .brush-size {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(40, 25, 15, 0.8);
+            padding: 15px 25px;
+            border-radius: 15px;
+            box-shadow: 
+                0 0 20px rgba(139, 69, 19, 0.4),
+                inset 0 0 10px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(139, 69, 19, 0.6);
+        }
+
+        .brush-size label {
+            color: #CD853F;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .brush-size input {
+            width: 150px;
+            height: 8px;
+            background: rgba(139, 69, 19, 0.3);
+            border-radius: 5px;
+            outline: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .brush-size input::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(
+                circle,
+                #FFD700 0%,
+                #B8860B 100%
+            );
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .story-section {
+            width: 100%;
+            max-width: 800px;
+            background: rgba(40, 25, 15, 0.9);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 
+                0 0 30px rgba(139, 69, 19, 0.6),
+                inset 0 0 15px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(139, 69, 19, 0.6);
+        }
+
+        .story-section h3 {
+            color: #FFD700;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .story-section textarea {
+            width: 100%;
+            height: 120px;
+            background: rgba(20, 10, 5, 0.8);
+            border: 2px solid rgba(139, 69, 19, 0.6);
+            border-radius: 10px;
+            padding: 15px;
+            color: #D2B48C;
+            font-size: 1rem;
+            font-family: 'Arial', sans-serif;
+            resize: vertical;
+            backdrop-filter: blur(2px);
+        }
+
+        .story-section textarea::placeholder {
+            color: rgba(210, 180, 140, 0.6);
+            font-style: italic;
+        }
+
+        .story-section textarea:focus {
+            outline: none;
+            border-color: rgba(255, 215, 0, 0.8);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .action-button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .clear-button {
+            background: linear-gradient(45deg, 
+                rgba(139, 0, 0, 0.8) 0%,
+                rgba(165, 42, 42, 0.9) 100%);
+            color: #FFE4E1;
+            border: 2px solid rgba(139, 0, 0, 0.6);
+        }
+
+        .clear-button:hover {
+            background: linear-gradient(45deg, 
+                rgba(165, 42, 42, 0.9) 0%,
+                rgba(178, 34, 34, 1) 100%);
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(139, 0, 0, 0.5);
+        }
+
+        .save-button {
+            background: linear-gradient(45deg, 
+                rgba(139, 69, 19, 0.8) 0%,
+                rgba(184, 134, 11, 0.9) 100%);
+            color: #FFD700;
+            border: 2px solid rgba(184, 134, 11, 0.6);
+        }
+
+        .save-button:hover {
+            background: linear-gradient(45deg, 
+                rgba(184, 134, 11, 0.9) 0%,
+                rgba(218, 165, 32, 1) 100%);
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(184, 134, 11, 0.5);
+        }
+
+        .back-button {
+            background: linear-gradient(45deg, 
+                rgba(25, 25, 112, 0.8) 0%,
+                rgba(72, 61, 139, 0.9) 100%);
+            color: #E6E6FA;
+            border: 2px solid rgba(72, 61, 139, 0.6);
+        }
+
+        .back-button:hover {
+            background: linear-gradient(45deg, 
+                rgba(72, 61, 139, 0.9) 0%,
+                rgba(106, 90, 205, 1) 100%);
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(72, 61, 139, 0.5);
+        }
+
+        .instructions {
+            background: rgba(20, 10, 5, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid rgba(139, 69, 19, 0.6);
+            max-width: 600px;
+            text-align: center;
+            box-shadow: 
+                0 0 20px rgba(139, 69, 19, 0.4),
+                inset 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .instructions h4 {
+            color: #FFD700;
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .instructions p {
+            color: #D2B48C;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .cave-sparks {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .spark {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: radial-gradient(
+                circle,
+                rgba(255, 215, 0, 1) 0%,
+                rgba(255, 140, 0, 0.8) 50%,
+                transparent 100%
+            );
+            border-radius: 50%;
+            opacity: 0;
+            animation: sparkle 3s ease-in-out infinite;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% {
+                text-shadow: 
+                    0 0 10px rgba(255, 215, 0, 0.8),
+                    0 0 20px rgba(255, 215, 0, 0.6),
+                    0 0 30px rgba(255, 215, 0, 0.4);
+            }
+            50% {
+                text-shadow: 
+                    0 0 15px rgba(255, 215, 0, 1),
+                    0 0 30px rgba(255, 215, 0, 0.8),
+                    0 0 45px rgba(255, 215, 0, 0.6),
+                    0 0 60px rgba(255, 215, 0, 0.4);
+            }
+        }
+
+        @keyframes sparkle {
+            0%, 100% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header p {
+                font-size: 1rem;
+            }
+            
+            #paintingCanvas {
+                width: 350px;
+                height: 250px;
+            }
+            
+            .color-palette {
+                gap: 10px;
+                padding: 15px;
+            }
+            
+            .color-option {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .action-buttons {
+                gap: 15px;
+            }
+            
+            .action-button {
+                padding: 12px 25px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="painting-container">
+        <div class="cave-overlay"></div>
+        <div class="cave-sparks" id="caveSparkContainer"></div>
+        
+        <div class="header">
+            <h1>Show us what you've seen the robots do</h1>
+            <p>Paint your vision on the ancient cave wall</p>
+        </div>
+
+        <div class="painting-studio">
+            <div class="instructions">
+                <h4>Cave Painting Instructions</h4>
+                <p>Use the ancient pigments to document what you have witnessed. Choose your colors wisely and tell the story of the machines through your art.</p>
+            </div>
+
+            <div class="canvas-container">
+                <div class="canvas-frame">
+                    <canvas id="paintingCanvas" width="500" height="350"></canvas>
+                </div>
+            </div>
+
+            <div class="color-palette">
+                <div class="color-option color-dark-red selected" data-color="#8B0000" title="Dark Red - Blood of the earth"></div>
+                <div class="color-option color-white" data-color="#F5F5DC" title="White - Bone and ash"></div>
+                <div class="color-option color-dark-blue" data-color="#191970" title="Dark Blue - Night sky"></div>
+            </div>
+
+            <div class="brush-size">
+                <label for="brushSize">Brush Size:</label>
+                <input type="range" id="brushSize" min="2" max="20" value="5">
+                <span id="brushSizeDisplay">5px</span>
+            </div>
+
+            <div class="story-section">
+                <h3>Tell the Story of Your Painting</h3>
+                <textarea id="paintingStory" placeholder="Describe what you have witnessed... What did the robots do? What did you see in their mechanical eyes? How did they move through our world?"></textarea>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-button clear-button" onclick="clearCanvas()">Clear Canvas</button>
+                <button class="action-button save-button" onclick="savePainting()">Save Painting</button>
+                <button class="action-button back-button" onclick="goBack()">Return to Cave</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('paintingCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let currentColor = '#8B0000';
+        let currentBrushSize = 5;
+
+        // Set canvas background to cave wall texture
+        ctx.fillStyle = 'rgba(139, 69, 19, 0.1)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Color selection
+        document.querySelectorAll('.color-option').forEach(option => {
+            option.addEventListener('click', function() {
+                // Remove selected class from all options
+                document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+                // Add selected class to clicked option
+                this.classList.add('selected');
+                currentColor = this.dataset.color;
+            });
+        });
+
+        // Brush size control
+        const brushSizeSlider = document.getElementById('brushSize');
+        const brushSizeDisplay = document.getElementById('brushSizeDisplay');
+
+        brushSizeSlider.addEventListener('input', function() {
+            currentBrushSize = this.value;
+            brushSizeDisplay.textContent = this.value + 'px';
+        });
+
+        // Drawing functions
+        function startDrawing(e) {
+            isDrawing = true;
+            draw(e);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            ctx.lineWidth = currentBrushSize;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = currentColor;
+
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                ctx.beginPath();
+            }
+        }
+
+        // Mouse events
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch events for mobile
+        canvas.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        });
+
+        canvas.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        });
+
+        canvas.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            const mouseEvent = new MouseEvent('mouseup', {});
+            canvas.dispatchEvent(mouseEvent);
+        });
+
+        // Action functions
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Restore cave wall background
+            ctx.fillStyle = 'rgba(139, 69, 19, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function savePainting() {
+            const story = document.getElementById('paintingStory').value;
+            
+            if (!story.trim()) {
+                alert('Please tell the story of your painting before saving!');
+                return;
+            }
+
+            // Create download link for the painting
+            const link = document.createElement('a');
+            link.download = 'cave-painting-' + Date.now() + '.png';
+            link.href = canvas.toDataURL();
+            
+            // Save story to local storage (in a real app, this would go to a server)
+            const paintingData = {
+                timestamp: Date.now(),
+                story: story,
+                imageData: canvas.toDataURL()
+            };
+            
+            const savedPaintings = JSON.parse(localStorage.getItem('cavePaintings') || '[]');
+            savedPaintings.push(paintingData);
+            localStorage.setItem('cavePaintings', JSON.stringify(savedPaintings));
+            
+            // Download the image
+            link.click();
+            
+            alert('Your cave painting has been saved! The ancient spirits will remember your vision.');
+        }
+
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+
+        // Cave spark animation system
+        function createCaveSpark() {
+            const sparkContainer = document.getElementById('caveSparkContainer');
+            const spark = document.createElement('div');
+            spark.className = 'spark';
+            
+            // Random position
+            spark.style.left = Math.random() * 100 + '%';
+            spark.style.top = Math.random() * 100 + '%';
+            
+            // Random animation delay
+            spark.style.animationDelay = Math.random() * 3 + 's';
+            
+            sparkContainer.appendChild(spark);
+            
+            // Remove spark after animation
+            setTimeout(() => {
+                if (spark.parentNode) {
+                    spark.parentNode.removeChild(spark);
+                }
+            }, 3000);
+        }
+
+        // Create sparks periodically
+        setInterval(createCaveSpark, 2000);
+
+        // Initialize with some sparks
+        for (let i = 0; i < 5; i++) {
+            setTimeout(createCaveSpark, i * 500);
+        }
+
+        // Prevent context menu on canvas
+        canvas.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+    </script>
+</body>
+</html>
