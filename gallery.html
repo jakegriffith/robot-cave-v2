@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cave Painting Gallery - Visions of the Robot Age</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            height: 100%;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(
+                to bottom,
+                rgba(20, 10, 5, 1) 0%,
+                rgba(40, 25, 15, 1) 30%,
+                rgba(60, 35, 20, 1) 70%,
+                rgba(80, 45, 25, 1) 100%
+            );
+            overflow-x: hidden;
+        }
+
+        .gallery-container {
+            position: relative;
+            width: 100vw;
+            min-height: 100vh;
+            background-image: url('Cave-wall.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        .cave-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                rgba(40, 25, 15, 0.3) 0%,
+                rgba(60, 35, 20, 0.4) 50%,
+                rgba(80, 45, 25, 0.5) 100%
+            );
+            z-index: 1;
+        }
+
+        .header {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 30px 20px;
+            background: rgba(20, 10, 5, 0.8);
+            backdrop-filter: blur(5px);
+            border-bottom: 3px solid rgba(139, 69, 19, 0.6);
+        }
+
+        .header h1 {
+            color: #FFD700;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 
+                0 0 10px rgba(255, 215, 0, 0.8),
+                0 0 20px rgba(255, 215, 0, 0.6),
+                0 0 30px rgba(255, 215, 0, 0.4);
+            animation: titleGlow 4s ease-in-out infinite;
+        }
+
+        .header p {
+            color: #CD853F;
+            font-size: 1.2rem;
+            font-style: italic;
+        }
+
+        .navigation {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            background: rgba(40, 25, 15, 0.8);
+            border-bottom: 2px solid rgba(139, 69, 19, 0.4);
+        }
+
+        .nav-button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .home-button {
+            background: linear-gradient(45deg, 
+                rgba(25, 25, 112, 0.8) 0%,
+                rgba(72, 61, 139, 0.9) 100%);
+            color: #E6E6FA;
+            border: 2px solid rgba(72, 61, 139, 0.6);
+        }
+
+        .home-button:hover {
+            background: linear-gradient(45deg, 
+                rgba(72, 61, 139, 0.9) 0%,
+                rgba(106, 90, 205, 1) 100%);
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(72, 61, 139, 0.5);
+        }
+
+        .paint-button {
+            background: linear-gradient(45deg, 
+                rgba(139, 69, 19, 0.8) 0%,
+                rgba(184, 134, 11, 0.9) 100%);
+            color: #FFD700;
+            border: 2px solid rgba(184, 134, 11, 0.6);
+        }
+
+        .paint-button:hover {
+            background: linear-gradient(45deg, 
+                rgba(184, 134, 11, 0.9) 0%,
+                rgba(218, 165, 32, 1) 100%);
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(184, 134, 11, 0.5);
+        }
+
+        .gallery-content {
+            position: relative;
+            z-index: 5;
+            padding: 40px 20px;
+            min-height: calc(100vh - 200px);
+        }
+
+        .loading {
+            text-align: center;
+            color: #CD853F;
+            font-size: 1.2rem;
+            padding: 50px;
+            text-shadow: 0 0 5px rgba(205, 133, 63, 0.5);
+        }
+
+        .no-paintings {
+            text-align: center;
+            color: #CD853F;
+            font-size: 1.2rem;
+            padding: 50px;
+            text-shadow: 0 0 5px rgba(205, 133, 63, 0.5);
+        }
+
+        .paintings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .painting-card {
+            background: linear-gradient(
+                135deg,
+                rgba(101, 67, 33, 0.9) 0%,
+                rgba(139, 69, 19, 0.8) 30%,
+                rgba(160, 82, 45, 0.7) 70%,
+                rgba(139, 69, 19, 0.9) 100%
+            );
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 
+                0 0 30px rgba(139, 69, 19, 0.6),
+                inset 0 0 20px rgba(0, 0, 0, 0.3);
+            border: 3px solid rgba(160, 82, 45, 0.8);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .painting-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 
+                0 10px 40px rgba(139, 69, 19, 0.8),
+                inset 0 0 25px rgba(0, 0, 0, 0.4);
+            border-color: rgba(255, 215, 0, 0.6);
+        }
+
+        .painting-frame {
+            position: relative;
+            background: linear-gradient(
+                45deg,
+                rgba(62, 39, 35, 0.9) 0%,
+                rgba(101, 67, 33, 0.8) 50%,
+                rgba(62, 39, 35, 0.9) 100%
+            );
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5);
+            margin-bottom: 15px;
+        }
+
+        .painting-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+            box-shadow: 
+                0 0 20px rgba(0, 0, 0, 0.4),
+                inset 0 0 30px rgba(139, 69, 19, 0.2);
+            border: 2px solid rgba(101, 67, 33, 0.6);
+        }
+
+        .painting-info {
+            color: #D2B48C;
+        }
+
+        .painting-artist {
+            color: #FFD700;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+        }
+
+        .painting-date {
+            color: #CD853F;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            font-style: italic;
+        }
+
+        .painting-story {
+            font-size: 0.95rem;
+            line-height: 1.4;
+            max-height: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            text-shadow: 0 0 3px rgba(210, 180, 140, 0.3);
+        }
+
+        .painting-story.expanded {
+            max-height: none;
+            -webkit-line-clamp: unset;
+        }
+
+        .expand-button {
+            background: none;
+            border: none;
+            color: #FFD700;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 5px;
+            text-decoration: underline;
+            transition: all 0.3s ease;
+        }
+
+        .expand-button:hover {
+            color: #FFF;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.8);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            position: relative;
+            background: rgba(20, 15, 10, 0.95);
+            margin: 2% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 
+                0 0 50px rgba(139, 69, 19, 0.8),
+                inset 0 0 30px rgba(0, 0, 0, 0.5);
+            border: 3px solid rgba(139, 69, 19, 0.6);
+        }
+
+        .modal-image {
+            width: 100%;
+            max-height: 400px;
+            object-fit: contain;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+        }
+
+        .modal-artist {
+            color: #FFD700;
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.7);
+        }
+
+        .modal-date {
+            color: #CD853F;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .modal-story {
+            color: #D2B48C;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            text-shadow: 0 0 5px rgba(210, 180, 140, 0.5);
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            color: #CD853F;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .close:hover {
+            color: #FFD700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+            transform: scale(1.2);
+        }
+
+        .stats {
+            text-align: center;
+            padding: 20px;
+            background: rgba(20, 10, 5, 0.8);
+            margin-bottom: 30px;
+            border-radius: 15px;
+            border: 2px solid rgba(139, 69, 19, 0.4);
+            max-width: 600px;
+            margin: 0 auto 30px auto;
+        }
+
+        .stats h3 {
+            color: #FFD700;
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.7);
+        }
+
+        .stats p {
+            color: #CD853F;
+            font-size: 1rem;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% {
+                text-shadow: 
+                    0 0 10px rgba(255, 215, 0, 0.8),
+                    0 0 20px rgba(255, 215, 0, 0.6),
+                    0 0 30px rgba(255, 215, 0, 0.4);
+            }
+            50% {
+                text-shadow: 
+                    0 0 15px rgba(255, 215, 0, 1),
+                    0 0 30px rgba(255, 215, 0, 0.8),
+                    0 0 45px rgba(255, 215, 0, 0.6),
+                    0 0 60px rgba(255, 215, 0, 0.4);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header p {
+                font-size: 1rem;
+            }
+            
+            .paintings-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 0 10px;
+            }
+            
+            .painting-card {
+                padding: 15px;
+            }
+            
+            .navigation {
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+                margin: 5% auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="gallery-container">
+        <div class="cave-overlay"></div>
+        
+        <div class="header">
+            <h1>Cave Painting Gallery</h1>
+            <p>Visions of the Robot Age - Documented by Fellow Survivors</p>
+        </div>
+
+        <div class="navigation">
+            <a href="index.html" class="nav-button home-button">Return to Cave</a>
+            <a href="paint.html" class="nav-button paint-button">Create Your Own Painting</a>
+        </div>
+
+        <div class="gallery-content">
+            <div class="stats" id="stats">
+                <h3>Gallery Statistics</h3>
+                <p id="statsText">Loading...</p>
+            </div>
+
+            <div id="loading" class="loading">
+                Loading ancient visions...
+            </div>
+
+            <div id="noPaintings" class="no-paintings" style="display: none;">
+                No paintings have been discovered yet. Be the first to document your visions of the robot age!
+            </div>
+
+            <div id="paintingsGrid" class="paintings-grid" style="display: none;">
+                <!-- Paintings will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for full painting view -->
+    <div id="paintingModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <img id="modalImage" class="modal-image" src="" alt="Cave Painting">
+            <div id="modalArtist" class="modal-artist"></div>
+            <div id="modalDate" class="modal-date"></div>
+            <div id="modalStory" class="modal-story"></div>
+        </div>
+    </div>
+
+    <script>
+        let paintings = [];
+
+        // Load paintings from server
+        async function loadPaintings() {
+            try {
+                const response = await fetch('/api/paintings');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch paintings');
+                }
+                
+                paintings = await response.json();
+                displayPaintings();
+                updateStats();
+                
+            } catch (error) {
+                console.error('Error loading paintings:', error);
+                document.getElementById('loading').innerHTML = 'Failed to load paintings. Please try again later.';
+            }
+        }
+
+        // Display paintings in the grid
+        function displayPaintings() {
+            const loading = document.getElementById('loading');
+            const noPaintings = document.getElementById('noPaintings');
+            const grid = document.getElementById('paintingsGrid');
+
+            loading.style.display = 'none';
+
+            if (paintings.length === 0) {
+                noPaintings.style.display = 'block';
+                return;
+            }
+
+            grid.style.display = 'grid';
+            grid.innerHTML = '';
+
+            paintings.forEach((painting, index) => {
+                const card = createPaintingCard(painting, index);
+                grid.appendChild(card);
+            });
+        }
+
+        // Create a painting card element
+        function createPaintingCard(painting, index) {
+            const card = document.createElement('div');
+            card.className = 'painting-card';
+            card.onclick = () => openModal(painting);
+
+            const date = new Date(painting.timestamp).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            const storyPreview = painting.story.length > 150 
+                ? painting.story.substring(0, 150) + '...' 
+                : painting.story;
+
+            card.innerHTML = `
+                <div class="painting-frame">
+                    <img class="painting-image" src="${painting.imageUrl}" alt="Cave Painting by ${painting.artist}" loading="lazy">
+                </div>
+                <div class="painting-info">
+                    <div class="painting-artist">${painting.artist}</div>
+                    <div class="painting-date">${date}</div>
+                    <div class="painting-story" id="story-${index}">
+                        ${storyPreview}
+                    </div>
+                    ${painting.story.length > 150 ? `
+                        <button class="expand-button" onclick="event.stopPropagation(); toggleStory(${index})">
+                            Read more...
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Toggle story expansion
+        function toggleStory(index) {
+            const storyElement = document.getElementById(`story-${index}`);
+            const painting = paintings[index];
+            
+            if (storyElement.classList.contains('expanded')) {
+                const storyPreview = painting.story.length > 150 
+                    ? painting.story.substring(0, 150) + '...' 
+                    : painting.story;
+                storyElement.innerHTML = storyPreview;
+                storyElement.classList.remove('expanded');
+                storyElement.nextElementSibling.textContent = 'Read more...';
+            } else {
+                storyElement.innerHTML = painting.story;
+                storyElement.classList.add('expanded');
+                storyElement.nextElementSibling.textContent = 'Read less...';
+            }
+        }
+
+        // Open modal with full painting details
+        function openModal(painting) {
+            const modal = document.getElementById('paintingModal');
+            const modalImage = document.getElementById('modalImage');
+            const modalArtist = document.getElementById('modalArtist');
+            const modalDate = document.getElementById('modalDate');
+            const modalStory = document.getElementById('modalStory');
+
+            const date = new Date(painting.timestamp).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            modalImage.src = painting.imageUrl;
+            modalImage.alt = `Cave Painting by ${painting.artist}`;
+            modalArtist.textContent = painting.artist;
+            modalDate.textContent = `Created on ${date}`;
+            modalStory.textContent = painting.story;
+
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Close modal
+        function closeModal() {
+            const modal = document.getElementById('paintingModal');
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Update gallery statistics
+        function updateStats() {
+            const statsText = document.getElementById('statsText');
+            const totalPaintings = paintings.length;
+            
+            if (totalPaintings === 0) {
+                statsText.textContent = 'No visions have been documented yet.';
+                return;
+            }
+
+            const uniqueArtists = new Set(paintings.map(p => p.artist)).size;
+            const latestPainting = paintings[0]; // Already sorted by newest first
+            const latestDate = new Date(latestPainting.timestamp).toLocaleDateString();
+
+            statsText.innerHTML = `
+                ${totalPaintings} vision${totalPaintings !== 1 ? 's' : ''} documented by ${uniqueArtists} survivor${uniqueArtists !== 1 ? 's' : ''}<br>
+                Latest vision recorded on ${latestDate}
+            `;
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('paintingModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Load paintings when page loads
+        window.addEventListener('load', loadPaintings);
+
+        // Refresh paintings every 30 seconds to show new ones
+        setInterval(loadPaintings, 30000);
+    </script>
+</body>
+</html>
